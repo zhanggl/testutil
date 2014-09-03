@@ -59,7 +59,7 @@ class ExternalRedis() {
     val p = new ProcessBuilder("redis-server", "--help").start()
     p.waitFor()
     val exitValue = p.exitValue()
-    require(exitValue == 0 || exitValue == 1, "redis-server binary must be present.")
+    require(exitValue == 0 || exitValue == 1 || exitValue == -1, "redis-server binary must be present.")
   }
 
   private[this] def findAddress() {
@@ -79,7 +79,7 @@ class ExternalRedis() {
     val f = File.createTempFile("redis-"+rand.nextInt(1000), ".tmp")
     f.deleteOnExit()
     val out = new PrintWriter(new BufferedWriter(new FileWriter(f)))
-    val conf = "port %s".format(port)
+    val conf = "port %s\nmaxheap 20m".format(port)
     out.write(conf)
     out.println()
     out.close()
@@ -92,7 +92,7 @@ class ExternalRedis() {
     val cmd: Seq[String] = Seq("redis-server", conf)
     val builder = new ProcessBuilder(cmd.toList).redirectErrorStream(true)
     //println(builder.environment())
-    builder.directory(new File("/Users/lyrion/temp/"))
+    builder.directory(new File(System.getenv("TEMP")))
     print("Redis-server starting at port %s...".format(port))
     process = Some(builder.start())
     futurePool{val br = new BufferedReader(new InputStreamReader(process.get.getInputStream()))
